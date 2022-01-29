@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="cn">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
+  <script src="https://cdn.jsdelivr.net/npm/clipboard@2.0.8/dist/clipboard.min.js"></script>
+  <style>
+    :root {
+
+      background-color: rgb(241, 234, 208);
+      --color-grown: #dbac95;
+      --color-red: #9c3e29;
+      --border-table: #c5b9a1;
+      --table_other: #ddd6bc;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    }
+
+    html,
+    body {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+    }
+
+    th {
+      font-weight: normal;
+      width: 32vw;
+      padding: 10px 0;
+      background-color: #a03722;
+      border: solid var(--border-table) 1px;
+      border-width: 1px 1px 1px 0;
+    }
+
+    th:nth-child(1) {
+      border-left-width: 1px;
+    }
+
+    td {
+      width: 32vw;
+      max-width: 32vw;
+      font-weight: bolder;
+      color: var(--color-red);
+      padding: 10px 0;
+      border: solid var(--border-table) 1px;
+      border-width: 0 1px 1px 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    td:nth-child(1) {
+      border-left-width: 1px;
+    }
+
+    .list:nth-child(2n) {
+      background-color: var(--table_other);
+    }
+
+    .page {
+      margin: 0.5rem 0;
+      display: grid;
+      grid-template-columns: repeat(auto-fill,3rem);
+      gap: 3px;
+    }
+
+    .page .item {
+      height: 3rem;
+      display: flex;
+      width: 3rem;
+      background: var(--table_other);
+      align-items: center;
+      justify-content: center;
+      color: var(--color-red);
+      cursor: pointer;
+      border-radius: 5px;
+      overflow: hidden;
+      border: solid 0px;
+    }
+
+    .toast {
+      animation: none;
+    }
+
+    .toastContainer {
+      position: fixed;
+      top: 10px;
+      left: 0;
+      width: 100vw;
+      display: flex;
+      justify-content: center;
+    }
+
+    .toastContainer>div {
+      padding: 10px 20px;
+      color: rgb(218, 218, 218);
+      background: rgba(0, 0, 0, 0.8);
+      border: solid 0;
+      border-radius: 8px;
+      font-size: 0.9rem;
+    }
+
+    .display {
+      animation: run 2s forwards;
+    }
+
+    .none {
+      display: none;
+    }
+
+    @keyframes run {
+      from {
+        opacity: 1;
+      }
+
+      to {
+        opacity: 0;
+      }
+    }
+    .copy{
+        width: 20vw;
+        border:none;
+        border:solid 1px var(--color-grown);
+        margin-top: 10px;
+        height:1.5rem;
+        border-radius: 3px;
+        background: rgb(241, 234, 208);
+        color: var(--color-red);
+        padding-left: 0.5pxrem;
+    }
+  </style>
+  <title>少虎少虎，办事靠谱</title>
+</head>
+
+<body style="margin: 0 2vw;">
+  <script>
+    var e323wasdc = true;
+    
+    function toast(message) {
+      const toast = document.getElementById("toast");
+      toast.innerText = message;
+      toast.setAttribute("class", "toast");
+      setInterval(() => {
+        toast.setAttribute("class", "display");
+      }, 2000)
+    }
+    function isOkey(){
+        if(!e323wasdc){
+            toast("点的太快了~");
+            return true;
+        }
+        return false;
+    }
+    function delay(){
+        e323wasdc = false;
+        if(!e323wasdc){
+            var timer = setTimeout(()=>{
+                e323wasdc = true;
+                clearTimeout(timer);
+            },5000);
+        }
+    }
+    function getData(tpage, tsize) {
+      try {
+        fetch('http://wz.152527.xyz/data.php?do=get&page=' + tpage + '&size=' + tsize)
+          .then(function (response) {
+            return response.json();
+          })
+          .then(function (myJson) {
+              
+            if (myJson.length != 0) {
+              let dom = "";
+              myJson.forEach(element => {
+                dom += "<tr class='list'>" +
+                  "<td class='xhlink' data-clipboard-text='" + element.link + "'>" + element.link + "</td>" +
+                  "<td>" + element.price + "</td>" +
+                  "<td><span style='font-weight:normal; cursor: pointer;' role='" + element.uid + "' onClick=mark(event)>标记失效</span></td>"
+                "</tr>"
+              });
+              const tbody = document.getElementById("tbody");
+              tbody.innerHTML = dom;
+            } else {
+              tbody.innerHTML = "<tr><td></td><td>没有数据</td><td></td></tr>"
+            }
+
+          });
+      } catch (error) {
+        console.log(error)
+      }
+    }
+    function getCount(tsize) {
+      try {
+        fetch('http://wz.152527.xyz/data.php?do=page')
+          .then(function (response) {
+            return response.json();
+          })
+          .then(function (myJson) {
+            let counts = myJson.count
+            const page = document.getElementById("page");
+            document.getElementById("totalCount").innerText = counts;
+            let pages = 0;
+            if (counts % tsize != 0) {
+              pages = (counts / tsize) + 1
+            } else {
+              pages = counts / tsize
+            }
+            let items = "";
+            for (let i = 1; i < pages; i++) {
+              items += "<span class='item' onClick=toPage(event)>" + i + "</span>";
+            }
+            page.innerHTML = items;
+          });
+      } catch (error) {
+        console.log(error)
+      }
+    }
+    function mark(event) {
+        if(isOkey()){
+            return false
+        }
+        delay();
+      let uid = event.target.attributes.role.value;
+      // http://localhost/page2/data.php?do=update&id=1
+      try {
+        fetch('http://wz.152527.xyz/data.php?do=update&id=' + uid)
+          .then(function (response) {
+            return response.json();
+          })
+          .then(function (myJson) {
+            toast("已经标记为失效链接，感谢");
+            let page = document.getElementById("currentPage").innerText;
+            getData(page, 8);
+          });
+      } catch (error) {
+        console.log(error)
+      }
+    }
+    function toPage(event) {
+      let page = event.target.innerHTML;
+      if (document.getElementById("currentPage").innerHTML == page) {
+        toast("已是当前页")
+      } else {
+        getData(page, 8);
+        getCount(8);
+        var inter = setInterval(()=>{
+        if(document.documentElement.scrollTop>0){
+          document.documentElement.scrollTop-=50;
+          if(document.documentElement.scrollTop<=0){
+            document.documentElement.scrollTop=0;
+            clearInterval(inter);
+          }
+        }
+        },1)
+        document.getElementById("currentPage").innerHTML = page
+      }
+    }
+    function getIp(){
+        try {
+        fetch('http://wz.152527.xyz/data.php?do=ip')
+          .then(function (response) {
+              console.log(response)
+            return response.json();
+          })
+          .then(function (myJson) {
+            console.log(myJson);
+          });
+      } catch (error) {
+        console.log(error)
+      }
+    }
+  </script>
+  <div class="toastContainer" id="top">
+    <div id="toast" class="none"></div>
+  </div>
+  <div style="box-sizing: border-box;">
+    <header>
+      <div style="box-sizing: border-box;">
+        <h2 style="font-weight: normal;color: var(--color-red);">小虎糕商铺表</h2>
+        <span style="color: #ac835e;">从各个QQ群获取的信息，不一定真实，仔细辨认!!!<br>高价的很容易卖完，可以往后跳几页<br>如果可以，看到卖完的标记一下</span><br>
+        <span style="color: #ac835e;">点击链接即可复制到剪贴板</span><br>
+        <!--<span style="color: #ac835e;">奇怪，QQ浏览器不能点击复制，点完链接来这个输入框复制吧</span><br>-->
+        <!--<input type='text' onClick='this.select()' class="copy" value='' id="copy"/>-->
+      </div>
+    </header>
+    <div style="text-align: center;margin-top: 1rem;">
+      <table cellspacing="0">
+        <thead style="color: var(--color-grown);">
+          <th>链接</th>
+          <th>价格</th>
+          <th>操作</th>
+        </thead>
+        <tbody id="tbody">
+        </tbody>
+      </table>
+    </div>
+    <div style="color: var(--color-red); font-size: 0.8rem; margin-top: 15px;">共有<span id="totalCount">0</span>条数据,当前在第<span id="currentPage">1</span>页
+    </div>
+    <div id="page" class="page">
+      <span class="item">1</span>
+      <span class="item">1</span>
+      <span class="item">1</span>
+    </div>
+  </div>
+  <script>
+    // http://localhost/page2/data.php?do=get&page=1&size=2
+    let clip = new ClipboardJS('.xhlink');
+    clip.on('success', function (e) {
+    //   document.getElementById("copy").value = e.text;
+    //   console.log(e.text)
+      toast("已经复制到剪贴板")
+    })
+
+    getData(1, 8)
+    getCount(8)
+  </script>
+</body>
+
+</html>
